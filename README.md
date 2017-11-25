@@ -2,6 +2,8 @@
 
 This repository contains Python code and iPython notebooks used to run the experiments in [Improving the Adversarial Robustness and Interpretability of Deep Neural Networks by Regularizing their Input Gradients](TODO).
 
+![SVHN iterated tgsm gif](./svhn-doubleback-eps0pt1.gif)
+
 ## Main Idea
 
 If you add an imperceptibly small amount of carefully crafted noise to an image which a neural network classifies correctly, you can usually cause it to make an incorrect prediction. This type of noise addition is called "adversarial perturbation," and the perturbed images are called adversarial examples. Unfortunately, it turns out that it's [pretty](https://arxiv.org/pdf/1412.6572) [easy](https://arxiv.org/pdf/1602.02697) to generate adversarial examples which (1) [fool almost any model](https://arxiv.org/pdf/1605.07277) trained on the same dataset, and (2) [continue to fool models](https://arxiv.org/pdf/1707.07397) even when printed out or viewed at different perspectives and scales. As neural networks start being used for things like face recognition and self-driving cars, this vulnerability poses an increasingly pressing problem.
