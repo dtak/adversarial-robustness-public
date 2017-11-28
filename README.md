@@ -1,6 +1,6 @@
 # Adversarial Robustness (and Interpretability) via Gradient Regularization
 
-This repository contains Python code and iPython notebooks used to run the experiments in [Improving the Adversarial Robustness and Interpretability of Deep Neural Networks by Regularizing their Input Gradients](TODO).
+This repository contains Python code and iPython notebooks used to run the experiments in [Improving the Adversarial Robustness and Interpretability of Deep Neural Networks by Regularizing their Input Gradients](https://arxiv.org/abs/1711.09404).
 
 ![SVHN iterated tgsm gif](./svhn-doubleback-eps0pt1.gif)
 
@@ -9,7 +9,7 @@ This repository contains Python code and iPython notebooks used to run the exper
 If you add an imperceptibly small amount of carefully crafted noise to an image which a neural network classifies correctly, you can usually cause it to make an incorrect prediction. This type of noise addition is called "adversarial perturbation," and the perturbed images are called adversarial examples. Unfortunately, it turns out that it's [pretty](https://arxiv.org/pdf/1412.6572) [easy](https://arxiv.org/pdf/1602.02697) to generate adversarial examples which (1) [fool almost any model](https://arxiv.org/pdf/1605.07277) trained on the same dataset, and (2) [continue to fool models](https://arxiv.org/pdf/1707.07397) even when printed out or viewed at different perspectives and scales. As neural networks start being used for things like face recognition and self-driving cars, this vulnerability poses an increasingly pressing problem.
 
 In this repository, we try to tackle this problem directly, by training neural networks with a type of regularization that penalizes how sensitive their predictions are to infinitesimal changes in their inputs.
-This type of regularization moves examples further away from the decision boundary in input-space, and has the side-effect of making [gradient-based explanations](http://www.jmlr.org/papers/volume11/baehrens10a/baehrens10a.pdf) of the model -- as well as the adversarial perturbations themselves -- more human-interpretable. Check out the experiments below or the [paper](TODO) for more details!
+This type of regularization moves examples further away from the decision boundary in input-space, and has the side-effect of making [gradient-based explanations](http://www.jmlr.org/papers/volume11/baehrens10a/baehrens10a.pdf) of the model -- as well as the adversarial perturbations themselves -- more human-interpretable. Check out the experiments below or the [paper](https://arxiv.org/abs/1711.09404) for more details!
 
 ## Repository Structure
 
@@ -28,10 +28,3 @@ To immediately run the notebooks using models and adversarial examples used to g
 To fully replicate all experiments, you can use the files in the [scripts](./scripts) directory to retrain models and regenerate adversarial examples.
 
 This code was tested with Python 3.5 and Tensorflow >= 1.2.1. Most files should also work with Python 2.7, but training may not work with earlier versions of Tensorflow, which lack second-derivative support for many CNN operations.
-
-## Citation
-
-You can cite
-```
-TODO
-```
