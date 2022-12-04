@@ -13,6 +13,8 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 from adversarial_robustness.utils import *
 from adversarial_robustness.score import Score
 
+tf.compat.v1.experimental.output_all_intermediates(True)
+
 """
 Class attempting to make Tensorflow models more object-oriented
 and similar to sklearn's fit/predict interface.
@@ -30,9 +32,10 @@ class NeuralNetwork():
 
   def setup_model(self, X=None, y=None):
     with tf.name_scope(self.name):
-      self.X = tf.placeholder(self.dtype, self.x_shape, name="X") if X is None else X
-      self.y = tf.placeholder(self.dtype, self.y_shape, name="y") if y is None else y
-      self.is_train = tf.placeholder_with_default(
+      tf.compat.v1.disable_eager_execution()
+      self.X = tf.compat.v1.placeholder(self.dtype, self.x_shape, name="X") if X is None else X
+      self.y = tf.compat.v1.placeholder(self.dtype, self.y_shape, name="y") if y is None else y
+      self.is_train = tf.compat.v1.placeholder_with_default(
           tf.constant(False, dtype=tf.bool), shape=(), name="is_train")
     self.model = self.rebuild_model(self.X)
 
@@ -65,7 +68,7 @@ class NeuralNetwork():
 
   def eval(self, tf_quantity, batches=20, batch_size=128, **kwargs):
     """Evaluate the average value of a symbolic quantity over several batches."""
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
       self.init(sess)
       batch_iterator = self.minibatches(kwargs, batch_size=batch_size)
       quantity = 0
@@ -81,12 +84,12 @@ class NeuralNetwork():
   # Useful (cached) functions of our network outputs
   #
   def cross_entropy_with(self, y):
-    return tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=self.logits, labels=y))
+    return tf.math.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=self.logits, labels=y))
 
   @cachedproperty
   def preds(self):
     """Symbolic TF variable returning an Nx1 vector of predictions"""
-    return tf.argmax(self.logits, axis=1)
+    return tf.math.argmax(self.logits, axis=1)
 
   @cachedproperty
   def probs(self):
@@ -96,7 +99,7 @@ class NeuralNetwork():
   @cachedproperty
   def logps(self):
     """Symbolic TF variable returning an Nx1 vector of log-probabilities"""
-    return self.logits - tf.reduce_logsumexp(self.logits, 1, keep_dims=True)
+    return self.logits - tf.math.reduce_logsumexp(self.logits, 1, keepdims=True)
 
   @cachedproperty
   def certainty_sensitivity(self):
@@ -118,7 +121,7 @@ class NeuralNetwork():
   @cachedproperty
   def l1_certainty_sensitivity(self):
     """Cache the L1 loss of that product"""
-    return tf.reduce_mean(tf.abs(self.certainty_sensitivity))
+    return tf.math.reduce_mean(tf.abs(self.certainty_sensitivity))
 
   @cachedproperty
   def l2_certainty_sensitivity(self):
@@ -128,12 +131,12 @@ class NeuralNetwork():
   @cachedproperty
   def l1_weights(self):
     """L1 loss for the weights of the network"""
-    return tf.add_n([tf.reduce_sum(tf.abs(v)) for v in tf.trainable_variables() if v in self.vars])
+    return tf.add_n([tf.reduce_sum(tf.math.abs(v)) for v in tf.compat.v1.trainable_variables() if v in self.vars])
 
   @cachedproperty
   def l2_weights(self):
     """L2 loss for the weights of the network"""
-    return tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables() if v in self.vars])
+    return tf.math.add_n([tf.nn.l2_loss(v) for v in tf.compat.v1.trainable_variables() if v in self.vars])
 
   @cachedproperty
   def cross_entropy(self):
@@ -151,7 +154,7 @@ class NeuralNetwork():
   @cachedproperty
   def l1_double_backprop(self):
     """L1 loss of the sensitivity of the cross entropy"""
-    return tf.reduce_sum(tf.abs(self.cross_entropy_grads))
+    return tf.math.reduce_sum(tf.math.abs(self.cross_entropy_grads))
 
   @cachedproperty
   def l2_double_backprop(self):
@@ -169,8 +172,8 @@ class NeuralNetwork():
 
   @cachedproperty
   def accuracy(self):
-    return tf.reduce_mean(tf.cast(tf.equal(
-      self.preds, tf.argmax(self.y, 1)), dtype=tf.float32))
+    return tf.math.reduce_mean(tf.cast(tf.math.equal(
+      self.preds, tf.math.argmax(self.y, 1)), dtype=tf.float32))
 
   #############################################
   # Predicting
@@ -178,13 +181,13 @@ class NeuralNetwork():
   def score(self, X, y):
     """Function that takes numpy arrays `X` (in NxD) and `y` (in either NxK or
     Nx1) and returns the model's predictive accuracy"""
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
       self.init(sess)
       return self.score_(sess, X, y)
 
   def predict(self, X, n=1000):
     """Function that takes numpy arrays `X` (in NxD) and returns Nx1 predictions (batched)"""
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
       self.init(sess)
       preds = self.predict_(sess, X[:n])
       for i in range(n, len(X), n):
@@ -194,7 +197,7 @@ class NeuralNetwork():
   def predict_proba(self, X):
     """Function that takes numpy arrays `X` (in NxD) and returns NxK predicted
     probabilities"""
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
       self.init(sess)
       return self.predict_proba_(sess, X)
 
@@ -208,7 +211,7 @@ class NeuralNetwork():
 
   def score_(self, sess, X, y, n=1000):
     if len(y.shape) > 1: y = np.argmax(y, axis=1)
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
       self.init(sess)
       logits = sess.run(self.logits, feed_dict={ self.X: X[:n] })
       for i in range(n, len(X), n):
@@ -223,13 +226,13 @@ class NeuralNetwork():
     """Function that takes numpy arrays `X` (in NxD) and optionally some set of
     NxK labels `y` and returns the model's cross-entropy input gradients.
     Useful local linear approximation of what the model is doing locally."""
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
       self.init(sess)
       return self.input_gradients_(sess, X, y)
 
   def batch_input_gradients(self, X, y, n=1000, **kw):
     """Batched version of input gradients"""
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
       self.init(sess)
       grads = self.input_gradients_(sess, X[:n], y[:n], **kw)
       for i in range(n, len(X), n):
@@ -277,7 +280,7 @@ class NeuralNetwork():
     if softmax_temperature == 1:
       log_likelihood = self.cross_entropy
     else:
-      log_likelihood = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=self.logits/softmax_temperature, labels=self.y))
+      log_likelihood = tf.math.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=self.logits/softmax_temperature, labels=self.y))
     log_prior = 0
     for reg in [
         'l1_certainty_sensitivity', 'l2_certainty_sensitivity',
@@ -293,8 +296,8 @@ class NeuralNetwork():
     express the magnitude of a regularization term in a more intutive way."""
     ratio_sum = 0
     ratio_count = 0
-    with tf.Session() as sess:
-      sess.run(tf.global_variables_initializer())
+    with tf.compat.v1.Session() as sess:
+      sess.run(tf.compat.v1.global_variables_initializer())
       for i, feed in enumerate(self.minibatches(kwargs)):
         if i >= num_batches: break
         feed[self.is_train] = True
@@ -311,19 +314,19 @@ class NeuralNetwork():
     https://github.com/tensorflow/cleverhans/blob/80e57f67dc134f9cf954ad23784904d38af07577/cleverhans_tutorials/mnist_tutorial_tf.py#L139-L151.
     Importantly, we stop gradients to ensure that our model doesn't minimize this term by making its adversarial examples easier.
     """
-    preds_max = tf.reduce_max(self.logits, 1, keep_dims=True)
-    y_symb = tf.stop_gradient(tf.to_float(tf.equal(self.logits, preds_max)))
-    y_symb = y_symb / tf.reduce_sum(y_symb, 1, keep_dims=True)
+    preds_max = tf.math.reduce_max(self.logits, 1, keepdims=True)
+    y_symb = tf.stop_gradient(tf.compat.v1.to_float(tf.math.equal(self.logits, preds_max)))
+    y_symb = y_symb / tf.math.reduce_sum(y_symb, 1, keepdims=True)
     adv_loss = self.cross_entropy_with(y_symb)
     loss_grad, = tf.gradients(adv_loss, self.X)
-    normalized_grad = tf.stop_gradient(tf.sign(loss_grad))
+    normalized_grad = tf.stop_gradient(tf.math.sign(loss_grad))
     X_adv = tf.stop_gradient(tf.clip_by_value(
       self.X + fgsm_eps * normalized_grad,
       clip_min,
       clip_max))
     model2 = self.rebuild_model(X_adv, reuse=True)
     logits2 = model2[-1]
-    cross_entropy2 = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits2, labels=self.y))
+    cross_entropy2 = tf.math.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits2, labels=self.y))
     loss = cross_entropy2
     if l2_double_backprop > 0:
       xent2_grads = tf.gradients(cross_entropy2, X_adv)[0]
@@ -357,7 +360,7 @@ class NeuralNetwork():
     values before starting.
     """
     if optimizer is None:
-      optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate, epsilon=epsilon)
+      optimizer = tf.compat.v1.train.AdamOptimizer(learning_rate=learning_rate, epsilon=epsilon)
     if loss_fn is None:
       loss_fn = self.loss_function(**kwargs)
 
@@ -369,9 +372,9 @@ class NeuralNetwork():
     train_op = optimizer.apply_gradients(grads_and_vars)
     t = time.time()
 
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
       # Init
-      sess.run(tf.global_variables_initializer())
+      sess.run(tf.compat.v1.global_variables_initializer())
       if init: self.init(sess)
 
       # Train
@@ -395,7 +398,7 @@ class NeuralNetwork():
     net1.fit(X, y, softmax_temperature=T, **kwargs)
     yhat = tf.nn.softmax(net1.logits/T)
 
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
       net1.init(sess)
       ysmooth = yhat.eval(feed_dict={ net1.X: X[:1000] })
       for i in range(1000, len(X), 1000):
@@ -457,7 +460,7 @@ class NeuralNetwork():
 
   def adversarial_examples(self, method, X, y=None, **kwargs):
     """Wrapper for generating adversarial examples"""
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
       self.init(sess)
       if y is None:
         y = onehot(self.predict_(sess, X), self.num_classes)
@@ -470,14 +473,14 @@ class NeuralNetwork():
   @property
   def vars(self):
     """Find all of the (trainable) variables that belong to this model"""
-    return tf.get_default_graph().get_collection(
-        tf.GraphKeys.GLOBAL_VARIABLES, scope=self.name)
+    return tf.compat.v1.get_default_graph().get_collection(
+        tf.compat.v1.GraphKeys.GLOBAL_VARIABLES, scope=self.name)
 
   def init(self, sess):
     """Assign all of the stored `vals` to our Tensorflow `vars`. Run this after
     you start a new session."""
     if self.vals is None:
-      sess.run(tf.global_variables_initializer())
+      sess.run(tf.compate.v1.global_variables_initializer())
     else:
       for var, val in zip(self.vars, self.vals):
         sess.run(var.assign(val))
@@ -495,8 +498,8 @@ class NeuralNetwork():
 
   def parse_placeholders(self, kwargs):
     """
-    Figure out which elements of a dictionary are either tf.placeholders
-    or strings referencing attributes that are tf.placeholders, then ensure
+    Figure out which elements of a dictionary are either tf.compat.v1.placeholders
+    or strings referencing attributes that are tf.compat.v1.placeholders, then ensure
     we populate the feed dict with actual placeholders for easy feeding later.
     """
     feed = {}
