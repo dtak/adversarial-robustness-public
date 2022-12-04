@@ -33,7 +33,7 @@ def softmax(z):
   return e_x / div
 
 def logits_to_logprobs(z):
-  from scipy.misc import logsumexp
+  from scipy.special import logsumexp
   return z - logsumexp(z, axis=1, keepdims=True)
 
 class lazydict(defaultdict):

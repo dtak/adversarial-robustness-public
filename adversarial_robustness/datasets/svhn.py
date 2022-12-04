@@ -77,16 +77,16 @@ def download_and_preprocess_svhn(data_dir):
     statinfo = os.stat(filename)
     return filename
 
-  train_matfile = maybe_download('svhn/train_32x32.mat')
-  test_matfile = maybe_download('svhn/test_32x32.mat')
-  extra_matfile = maybe_download('svhn/extra_32x32.mat')
+  train_matfile = maybe_download('train_32x32.mat')
+  test_matfile = maybe_download('test_32x32.mat')
+  extra_matfile = maybe_download('extra_32x32.mat')
 
-  train_data = scipy.io.loadmat('svhn/train_32x32.mat', variable_names='X').get('X')
-  train_labels = scipy.io.loadmat('svhn/train_32x32.mat', variable_names='y').get('y')
-  test_data = scipy.io.loadmat('svhn/test_32x32.mat', variable_names='X').get('X')
-  test_labels = scipy.io.loadmat('svhn/test_32x32.mat', variable_names='y').get('y')
-  extra_data = scipy.io.loadmat('svhn/extra_32x32.mat', variable_names='X').get('X')
-  extra_labels = scipy.io.loadmat('svhn/extra_32x32.mat', variable_names='y').get('y')
+  train_data = scipy.io.loadmat('train_32x32.mat', variable_names='X').get('X')
+  train_labels = scipy.io.loadmat('train_32x32.mat', variable_names='y').get('y')
+  test_data = scipy.io.loadmat('test_32x32.mat', variable_names='X').get('X')
+  test_labels = scipy.io.loadmat('test_32x32.mat', variable_names='y').get('y')
+  extra_data = scipy.io.loadmat('extra_32x32.mat', variable_names='X').get('X')
+  extra_labels = scipy.io.loadmat('extra_32x32.mat', variable_names='y').get('y')
 
   print(train_data.shape, train_labels.shape)
   print(test_data.shape, test_labels.shape)
